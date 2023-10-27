@@ -50,20 +50,20 @@ class StatusBar:
         self.status_label.configure(image=self.ok_image, text=MESSAGE["clipboard"][0])
 
     def export(self, export_mode: str):
-        match export_mode:
-            case "alongside the image file":
-                self.info(MESSAGE["alongside"][0])
-            case "select directory":
-                self.info(MESSAGE["txt_select"][0])
+        # match export_mode:
+        if export_mode == "alongside the image file":
+            self.info(MESSAGE["alongside"][0])
+        if export_mode == "select directory":
+            self.info(MESSAGE["txt_select"][0])
 
     def remove(self, remove_mode: str):
-        match remove_mode:
-            case "add suffix":
-                self.info(MESSAGE["suffix"][0])
-            case "overwrite the original image":
-                self.info(MESSAGE["overwrite"][0])
-            case "select directory":
-                self.info(MESSAGE["remove_select"][0])
+        # match remove_mode:
+        if remove_mode == "add suffix":
+            self.info(MESSAGE["suffix"][0])
+        if remove_mode == "overwrite the original image":
+            self.info(MESSAGE["overwrite"][0])
+        if remove_mode == "select directory":
+            self.info(MESSAGE["remove_select"][0])
 
     def update(self, download_url):
         self.status_label.configure(

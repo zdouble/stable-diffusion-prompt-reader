@@ -26,18 +26,18 @@ class SwarmUI(BaseFormat):
         self._height = str(data_json.get("height"))
 
         for p, s in zip(super().PARAMETER_KEY, SwarmUI.SETTING_KEY):
-            match p:
-                case "sampler":
-                    comfyuisampler = data_json.get("comfyuisampler")
-                    autowebuisampler = data_json.get("autowebuisampler")
-                    self._parameter["sampler"] = str(
-                        remove_quotes((comfyuisampler, autowebuisampler))
-                        if comfyuisampler and autowebuisampler
-                        else comfyuisampler or autowebuisampler
-                    )
-                case "size":
-                    self._parameter["size"] = (
-                        str(data_json.get("width")) + "x" + str(data_json.get("height"))
-                    )
-                case _:
-                    self._parameter[p] = str(data_json.get(s))
+            # match p:
+            if p == "sampler":
+                comfyuisampler = data_json.get("comfyuisampler")
+                autowebuisampler = data_json.get("autowebuisampler")
+                self._parameter["sampler"] = str(
+                    remove_quotes((comfyuisampler, autowebuisampler))
+                    if comfyuisampler and autowebuisampler
+                    else comfyuisampler or autowebuisampler
+                )
+            elif p == "size":
+                self._parameter["size"] = (
+                    str(data_json.get("width")) + "x" + str(data_json.get("height"))
+                )
+            else:
+                self._parameter[p] = str(data_json.get(s))

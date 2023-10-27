@@ -35,10 +35,10 @@ class Fooocus(BaseFormat):
         self._height = str(data_json.get("height"))
 
         for p, s in zip(super().PARAMETER_KEY, Fooocus.SETTING_KEY):
-            match p:
-                case "size":
-                    self._parameter["size"] = (
-                        str(data_json.get("width")) + "x" + str(data_json.get("height"))
-                    )
-                case _:
-                    self._parameter[p] = str(data_json.get(s))
+            # match p:
+            if p == "size":
+                self._parameter["size"] = (
+                    str(data_json.get("width")) + "x" + str(data_json.get("height"))
+                )
+            else:
+                self._parameter[p] = str(data_json.get(s))

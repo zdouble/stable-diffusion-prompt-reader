@@ -57,30 +57,30 @@ class InvokeAI(BaseFormat):
         has_refiner = True if data_json.get("refiner_model") else False
 
         for p, s in zip(super().PARAMETER_KEY, InvokeAI.SETTING_KEY_INVOKEAI_METADATA):
-            match p:
-                case "model":
-                    self._parameter[p] = remove_quotes(
-                        str(
-                            (
-                                data_json.get("model").get("model_name"),
-                                data_json.get("refiner_model").get("model_name"),
-                            )
+            # match p:
+            if p == "model":
+                self._parameter[p] = remove_quotes(
+                    str(
+                        (
+                            data_json.get("model").get("model_name"),
+                            data_json.get("refiner_model").get("model_name"),
                         )
-                        if has_refiner
-                        else str(data_json.get("model").get("model_name"))
                     )
-                case "seed":
-                    self._parameter["seed"] = str(data_json.get("seed"))
-                case "size":
-                    self._parameter["size"] = (
-                        str(data_json.get("width")) + "x" + str(data_json.get("height"))
-                    )
-                case _:
-                    self._parameter[p] = remove_quotes(
-                        str((data_json.get(s[0]), data_json.get(s[1])))
-                        if has_refiner
-                        else str(data_json.get(s[0]))
-                    )
+                    if has_refiner
+                    else str(data_json.get("model").get("model_name"))
+                )
+            elif p == "seed":
+                self._parameter["seed"] = str(data_json.get("seed"))
+            elif p == "size":
+                self._parameter["size"] = (
+                    str(data_json.get("width")) + "x" + str(data_json.get("height"))
+                )
+            else:
+                self._parameter[p] = remove_quotes(
+                    str((data_json.get(s[0]), data_json.get(s[1])))
+                    if has_refiner
+                    else str(data_json.get(s[0]))
+                )
 
     def _invoke_metadata(self):
         data_json = json.loads(self._info.get("sd-metadata"))
@@ -115,15 +115,15 @@ class InvokeAI(BaseFormat):
         self._height = str(image.get("height"))
 
         for p, s in zip(super().PARAMETER_KEY, InvokeAI.SETTING_KEY_METADATA):
-            match p:
-                case "model":
-                    self._parameter["model"] = data_json.get(s)
-                case "size":
-                    self._parameter["size"] = (
-                        str(image.get("width")) + "x" + str(image.get("height"))
-                    )
-                case _:
-                    self._parameter[p] = str(image.get(s))
+            # match p:
+            if p == "model":
+                self._parameter["model"] = data_json.get(s)
+            elif p == "size":
+                self._parameter["size"] = (
+                    str(image.get("width")) + "x" + str(image.get("height"))
+                )
+            else:
+                self._parameter[p] = str(image.get(s))
 
     def _invoke_dream(self):
         data = self._info.get("Dream")
@@ -152,15 +152,15 @@ class InvokeAI(BaseFormat):
         self._height = str(setting_dict.get("H"))
 
         for p, s in zip(super().PARAMETER_KEY, InvokeAI.SETTING_KEY_DREAM):
-            match p:
-                case "model":
-                    self._parameter["model"] = ""
-                case "size":
-                    self._parameter["size"] = (
-                        str(setting_dict.get("W")) + "x" + str(setting_dict.get("H"))
-                    )
-                case _:
-                    self._parameter[p] = setting_dict.get(s)
+            # match p:
+            if p == "model":
+                self._parameter["model"] = ""
+            elif p == "size":
+                self._parameter["size"] = (
+                    str(setting_dict.get("W")) + "x" + str(setting_dict.get("H"))
+                )
+            else:
+                self._parameter[p] = setting_dict.get(s)
 
     @staticmethod
     def split_prompt(prompt: str):

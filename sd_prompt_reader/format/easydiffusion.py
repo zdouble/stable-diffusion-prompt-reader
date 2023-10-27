@@ -69,14 +69,14 @@ class EasyDiffusion(BaseFormat):
         self._height = str(data_json.get(ed["height"]))
 
         for p, s in zip(super().PARAMETER_KEY, EasyDiffusion.SETTING_KEY):
-            match p:
-                case "model":
-                    self._parameter["model"] = str(file)
-                case "size":
-                    self._parameter["size"] = (
-                        str(data_json.get(ed["width"]))
-                        + "x"
-                        + str(data_json.get(ed["height"]))
-                    )
-                case _:
-                    self._parameter[p] = str(data_json.get(s))
+            # match p:
+            if p == "model":
+                self._parameter["model"] = str(file)
+            elif p == "size":
+                self._parameter["size"] = (
+                    str(data_json.get(ed["width"]))
+                    + "x"
+                    + str(data_json.get(ed["height"]))
+                )
+            else:
+                self._parameter[p] = str(data_json.get(s))

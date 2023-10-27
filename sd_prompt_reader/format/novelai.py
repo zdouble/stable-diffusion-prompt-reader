@@ -37,10 +37,10 @@ class NovelAI(BaseFormat):
         self._setting = remove_quotes(str(data_json)).strip("{ }")
 
         for p, s in zip(super().PARAMETER_KEY, NovelAI.SETTING_KEY):
-            match p:
-                case "model":
-                    self._parameter["model"] = ""
-                case "size":
-                    self._parameter["size"] = str(self._width) + "x" + str(self._height)
-                case _:
-                    self._parameter[p] = str(data_json.get(s))
+            # match p:
+            if p == "model":
+                self._parameter["model"] = ""
+            elif p == "size":
+                self._parameter["size"] = str(self._width) + "x" + str(self._height)
+            else:
+                self._parameter[p] = str(data_json.get(s))

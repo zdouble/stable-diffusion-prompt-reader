@@ -164,19 +164,19 @@ class ComfyUI(BaseFormat):
         )
 
         for p, s in zip(super().PARAMETER_KEY, ComfyUI.SETTING_KEY):
-            match p:
-                case k if k in ("model", "sampler"):
-                    self._parameter[p] = str(remove_quotes(longest_flow.get(s)))
-                case "seed":
-                    self._parameter[p] = (
-                        str(longest_flow.get("seed"))
-                        if longest_flow.get("seed")
-                        else str(longest_flow.get("noise_seed"))
-                    )
-                case "size":
-                    self._parameter["size"] = str(self._width) + "x" + str(self._height)
-                case _:
-                    self._parameter[p] = str(longest_flow.get(s))
+            # match p:
+            if p in ("model", "sampler"):
+                self._parameter[p] = str(remove_quotes(longest_flow.get(s)))
+            elif p == "seed":
+                self._parameter[p] = (
+                    str(longest_flow.get("seed"))
+                    if longest_flow.get("seed")
+                    else str(longest_flow.get("noise_seed"))
+                )
+            elif p == "size":
+                self._parameter["size"] = str(self._width) + "x" + str(self._height)
+            else:
+                self._parameter[p] = str(longest_flow.get(s))
 
         if self._is_sdxl:
             if not self._positive and self.positive_sdxl:
@@ -203,269 +203,269 @@ class ComfyUI(BaseFormat):
         except:
             print("node error")
             return flow, node
-        match prompt[end_node]["class_type"]:
-            case node_type if node_type in ComfyUI.SAVE_IMAGE_TYPE:
-                try:
-                    last_flow, last_node = self._comfy_traverse(
-                        prompt, inputs["images"][0]
-                    )
-                    flow = merge_dict(flow, last_flow)
-                    node += last_node
-                except:
-                    print("comfyUI SaveImage error")
-            case node_type if node_type in ComfyUI.KSAMPLER_TYPES:
-                try:
-                    seed = None
-                    flow = inputs
-                    last_flow1, last_node1, last_flow2, last_node2 = {}, [], {}, []
-                    for key, value in inputs.items():
-                        match key:
-                            case "model":
-                                traverse_result = self._comfy_traverse(prompt, value[0])
-                                if isinstance(traverse_result, tuple):
-                                    last_flow1, last_node1 = traverse_result
-                                elif isinstance(traverse_result, dict):
-                                    flow.update({key: traverse_result.get("ckpt_name")})
-                            case "latent_image":
-                                last_flow2, last_node2 = self._comfy_traverse(
-                                    prompt, value[0]
+        # match prompt[end_node]["class_type"]:
+        if prompt[end_node]["class_type"] in ComfyUI.SAVE_IMAGE_TYPE:
+            try:
+                last_flow, last_node = self._comfy_traverse(
+                    prompt, inputs["images"][0]
+                )
+                flow = merge_dict(flow, last_flow)
+                node += last_node
+            except:
+                print("comfyUI SaveImage error")
+        elif prompt[end_node]["class_type"] in ComfyUI.KSAMPLER_TYPES:
+            try:
+                seed = None
+                flow = inputs
+                last_flow1, last_node1, last_flow2, last_node2 = {}, [], {}, []
+                for key, value in inputs.items():
+                    # match key:
+                    if key == "model":
+                        traverse_result = self._comfy_traverse(prompt, value[0])
+                        if isinstance(traverse_result, tuple):
+                            last_flow1, last_node1 = traverse_result
+                        elif isinstance(traverse_result, dict):
+                            flow.update({key: traverse_result.get("ckpt_name")})
+                    elif key == "latent_image":
+                        last_flow2, last_node2 = self._comfy_traverse(
+                            prompt, value[0]
+                        )
+                    elif key == "positive":
+                        positive = self._comfy_traverse(prompt, value[0])
+                        if isinstance(positive, str):
+                            self._positive = positive
+                        elif isinstance(positive, dict):
+                            if positive_prompt := positive.get("positive"):
+                                self._positive = positive_prompt
+                            else:
+                                self._positive_sdxl.update(positive)
+                    elif key == "negative":
+                        negative = self._comfy_traverse(prompt, value[0])
+                        if isinstance(negative, str):
+                            self._negative = negative
+                        elif isinstance(negative, dict):
+                            if negative_prompt := negative.get("negative"):
+                                self._negative = negative_prompt
+                            else:
+                                self._negative_sdxl.update(negative)
+                    elif key in ("seed", "noise_seed"):
+                        # handle "CR Seed"
+                        if isinstance(value, list):
+                            traverse_result = self._comfy_traverse(
+                                prompt, value[0]
+                            )
+                            if isinstance(traverse_result, dict):
+                                seed = {key: traverse_result.get("seed")}
+                            else:
+                                seed = {key: traverse_result}
+                        if seed:
+                            flow.update(seed)
+                    else:
+                        if isinstance(value, list):
+                            traverse_result = self._comfy_traverse(
+                                prompt, value[0]
+                            )
+                            if isinstance(traverse_result, dict):
+                                flow.update(
+                                    {key: traverse_result.get(key)}
                                 )
-                            case "positive":
-                                positive = self._comfy_traverse(prompt, value[0])
-                                if isinstance(positive, str):
-                                    self._positive = positive
-                                elif isinstance(positive, dict):
-                                    if positive_prompt := positive.get("positive"):
-                                        self._positive = positive_prompt
-                                    else:
-                                        self._positive_sdxl.update(positive)
-                            case "negative":
-                                negative = self._comfy_traverse(prompt, value[0])
-                                if isinstance(negative, str):
-                                    self._negative = negative
-                                elif isinstance(negative, dict):
-                                    if negative_prompt := negative.get("negative"):
-                                        self._negative = negative_prompt
-                                    else:
-                                        self._negative_sdxl.update(negative)
-                            case key_name if key_name in ("seed", "noise_seed"):
-                                # handle "CR Seed"
-                                if isinstance(value, list):
-                                    traverse_result = self._comfy_traverse(
-                                        prompt, value[0]
-                                    )
-                                    if isinstance(traverse_result, dict):
-                                        seed = {key_name: traverse_result.get("seed")}
-                                    else:
-                                        seed = {key_name: traverse_result}
-                                if seed:
-                                    flow.update(seed)
-                            case _ as key_name:
-                                if isinstance(value, list):
-                                    traverse_result = self._comfy_traverse(
-                                        prompt, value[0]
-                                    )
-                                    if isinstance(traverse_result, dict):
-                                        flow.update(
-                                            {key_name: traverse_result.get(key_name)}
-                                        )
 
-                    flow = merge_dict(flow, last_flow1)
-                    flow = merge_dict(flow, last_flow2)
-                    node += last_node1 + last_node2
-                except:
-                    print("comfyUI KSampler error")
-            case node_type if node_type in ComfyUI.CLIP_TEXT_ENCODE_TYPE:
-                try:
-                    match node_type:
-                        case "CLIPTextEncode":
-                            # SDXLPromptStyler & SDPromptReader
-                            if isinstance(inputs["text"], list):
-                                text = int(inputs["text"][0])
-                                traverse_result = self._comfy_traverse(
-                                    prompt, str(text)
-                                )
-                                if isinstance(traverse_result, tuple):
-                                    self._positive = traverse_result[0]
-                                    self._negative = traverse_result[1]
-                                elif isinstance(traverse_result, dict):
-                                    return traverse_result
-                                return
-                            elif isinstance(inputs["text"], str):
-                                return inputs.get("text")
-                        case "CLIPTextEncodeSDXL":
-                            # SDXLPromptStyler
-                            self._is_sdxl = True
-                            if isinstance(inputs["text_g"], list):
-                                text_g = int(inputs["text_g"][0])
-                                text_l = int(inputs["text_l"][0])
-                                prompt_styler_g = self._comfy_traverse(
-                                    prompt, str(text_g)
-                                )
-                                prompt_styler_l = self._comfy_traverse(
-                                    prompt, str(text_l)
-                                )
-                                self._positive_sdxl["Clip G"] = prompt_styler_g[0]
-                                self._positive_sdxl["Clip L"] = prompt_styler_l[0]
-                                self._negative_sdxl["Clip G"] = prompt_styler_g[1]
-                                self._negative_sdxl["Clip L"] = prompt_styler_l[1]
-                                return
-                            elif isinstance(inputs["text_g"], str):
-                                return {
-                                    "Clip G": inputs.get("text_g"),
-                                    "Clip L": inputs.get("text_l"),
-                                }
-                        case "CLIPTextEncodeSDXLRefiner":
-                            self._is_sdxl = True
-                            if isinstance(inputs["text"], list):
-                                # SDXLPromptStyler
-                                text = int(inputs["text"][0])
-                                prompt_styler = self._comfy_traverse(prompt, str(text))
-                                self._positive_sdxl["Refiner"] = prompt_styler[0]
-                                self._negative_sdxl["Refiner"] = prompt_styler[1]
-                                return
-                            elif isinstance(inputs["text"], str):
-                                return {"Refiner": inputs.get("text")}
-                except:
-                    print("comfyUI CLIPText error")
-            case "LoraLoader":
-                try:
-                    flow = inputs
+                flow = merge_dict(flow, last_flow1)
+                flow = merge_dict(flow, last_flow2)
+                node += last_node1 + last_node2
+            except:
+                print("comfyUI KSampler error")
+        elif prompt[end_node]["class_type"] in ComfyUI.CLIP_TEXT_ENCODE_TYPE:
+            try:
+                # match node_type:
+                if prompt[end_node]["class_type"] == "CLIPTextEncode":
+                    # SDXLPromptStyler & SDPromptReader
+                    if isinstance(inputs["text"], list):
+                        text = int(inputs["text"][0])
+                        traverse_result = self._comfy_traverse(
+                            prompt, str(text)
+                        )
+                        if isinstance(traverse_result, tuple):
+                            self._positive = traverse_result[0]
+                            self._negative = traverse_result[1]
+                        elif isinstance(traverse_result, dict):
+                            return traverse_result
+                        return
+                    elif isinstance(inputs["text"], str):
+                        return inputs.get("text")
+                if prompt[end_node]["class_type"] == "CLIPTextEncodeSDXL":
+                    # SDXLPromptStyler
+                    self._is_sdxl = True
+                    if isinstance(inputs["text_g"], list):
+                        text_g = int(inputs["text_g"][0])
+                        text_l = int(inputs["text_l"][0])
+                        prompt_styler_g = self._comfy_traverse(
+                            prompt, str(text_g)
+                        )
+                        prompt_styler_l = self._comfy_traverse(
+                            prompt, str(text_l)
+                        )
+                        self._positive_sdxl["Clip G"] = prompt_styler_g[0]
+                        self._positive_sdxl["Clip L"] = prompt_styler_l[0]
+                        self._negative_sdxl["Clip G"] = prompt_styler_g[1]
+                        self._negative_sdxl["Clip L"] = prompt_styler_l[1]
+                        return
+                    elif isinstance(inputs["text_g"], str):
+                        return {
+                            "Clip G": inputs.get("text_g"),
+                            "Clip L": inputs.get("text_l"),
+                        }
+                if prompt[end_node]["class_type"] == "CLIPTextEncodeSDXLRefiner":
+                    self._is_sdxl = True
+                    if isinstance(inputs["text"], list):
+                        # SDXLPromptStyler
+                        text = int(inputs["text"][0])
+                        prompt_styler = self._comfy_traverse(prompt, str(text))
+                        self._positive_sdxl["Refiner"] = prompt_styler[0]
+                        self._negative_sdxl["Refiner"] = prompt_styler[1]
+                        return
+                    elif isinstance(inputs["text"], str):
+                        return {"Refiner": inputs.get("text")}
+            except:
+                print("comfyUI CLIPText error")
+        elif prompt[end_node]["class_type"] == "LoraLoader":
+            try:
+                flow = inputs
+                last_flow, last_node = self._comfy_traverse(
+                    prompt, inputs["model"][0]
+                )
+                flow = merge_dict(flow, last_flow)
+                node += last_node
+            except:
+                print("comfyUI LoraLoader error")
+        elif prompt[end_node]["class_type"] in ComfyUI.CHECKPOINT_LOADER_TYPE:
+            try:
+                return inputs, node
+            except:
+                print("comfyUI CheckpointLoader error")
+        elif prompt[end_node]["class_type"] in ComfyUI.VAE_ENCODE_TYPE:
+            try:
+                last_flow, last_node = self._comfy_traverse(
+                    prompt, inputs["pixels"][0]
+                )
+                flow = merge_dict(flow, last_flow)
+                node += last_node
+            except:
+                print("comfyUI VAE error")
+        elif prompt[end_node]["class_type"] == "ControlNetApplyAdvanced":
+            try:
+                positive = self._comfy_traverse(prompt, inputs["positive"][0])
+                if isinstance(positive, str):
+                    self._positive = positive
+                elif isinstance(positive, dict):
+                    self._positive_sdxl.update(positive)
+                negative = self._comfy_traverse(prompt, inputs["negative"][0])
+                if isinstance(negative, str):
+                    self._negative = negative
+                elif isinstance(negative, dict):
+                    self._negative_sdxl.update(negative)
+
+                last_flow, last_node = self._comfy_traverse(
+                    prompt, inputs["image"][0]
+                )
+                flow = merge_dict(flow, last_flow)
+                node += last_node
+            except:
+                print("comfyUI ControlNetApply error")
+        elif prompt[end_node]["class_type"] == "ImageScale":
+            try:
+                flow = inputs
+                last_flow, last_node = self._comfy_traverse(
+                    prompt, inputs["image"][0]
+                )
+                flow = merge_dict(flow, last_flow)
+                node += last_node
+            except:
+                print("comfyUI ImageScale error")
+        elif prompt[end_node]["class_type"] == "UpscaleModelLoader":
+            try:
+                return {"upscaler": inputs["model_name"]}
+            except:
+                print("comfyUI UpscaleLoader error")
+        elif prompt[end_node]["class_type"] == "ImageUpscaleWithModel":
+            try:
+                flow = inputs
+                last_flow, last_node = self._comfy_traverse(
+                    prompt, inputs["image"][0]
+                )
+                model = self._comfy_traverse(prompt, inputs["upscale_model"][0])
+                flow = merge_dict(flow, last_flow)
+                flow = merge_dict(flow, model)
+                node += last_node
+            except:
+                print("comfyUI UpscaleModel error")
+        elif prompt[end_node]["class_type"] == "ConditioningCombine":
+            try:
+                last_flow1, last_node1 = self._comfy_traverse(
+                    prompt, inputs["conditioning_1"][0]
+                )
+                last_flow2, last_node2 = self._comfy_traverse(
+                    prompt, inputs["conditioning_2"][0]
+                )
+                flow = merge_dict(flow, last_flow1)
+                flow = merge_dict(flow, last_flow2)
+                node += last_node1 + last_node2
+            except:
+                print("comfyUI ConditioningCombine error")
+        # SD Prompt Reader Node
+        elif prompt[end_node]["class_type"] == "SDPromptReader":
+            try:
+                return json.loads(prompt[end_node]["is_changed"][0])
+            except:
+                print("comfyUI SDPromptReader error")
+        elif prompt[end_node]["class_type"] == "SDParameterGenerator":
+            try:
+                return inputs
+            except:
+                print("comfyUI SDParameterGenerator error")
+        # custom nodes
+        elif prompt[end_node]["class_type"] == "SDXLPromptStyler":
+            try:
+                return inputs.get("text_positive"), inputs.get("text_negative")
+            except:
+                print("comfyUI SDXLPromptStyler error")
+        elif prompt[end_node]["class_type"] == "CR Seed":
+            try:
+                return inputs.get("seed")
+            except:
+                print("comfyUI CR Seed error")
+        else:
+            try:
+                last_flow = {}
+                last_node = []
+                if inputs.get("samples"):
+                    last_flow, last_node = self._comfy_traverse(
+                        prompt, inputs["samples"][0]
+                    )
+                elif inputs.get("image") and isinstance(inputs.get("image"), list):
+                    last_flow, last_node = self._comfy_traverse(
+                        prompt, inputs["image"][0]
+                    )
+                elif inputs.get("model"):
                     last_flow, last_node = self._comfy_traverse(
                         prompt, inputs["model"][0]
                     )
-                    flow = merge_dict(flow, last_flow)
-                    node += last_node
-                except:
-                    print("comfyUI LoraLoader error")
-            case node_type if node_type in ComfyUI.CHECKPOINT_LOADER_TYPE:
-                try:
-                    return inputs, node
-                except:
-                    print("comfyUI CheckpointLoader error")
-            case node_type if node_type in ComfyUI.VAE_ENCODE_TYPE:
-                try:
+                elif inputs.get("clip"):
                     last_flow, last_node = self._comfy_traverse(
-                        prompt, inputs["pixels"][0]
+                        prompt, inputs["clip"][0]
                     )
-                    flow = merge_dict(flow, last_flow)
-                    node += last_node
-                except:
-                    print("comfyUI VAE error")
-            case "ControlNetApplyAdvanced":
-                try:
-                    positive = self._comfy_traverse(prompt, inputs["positive"][0])
-                    if isinstance(positive, str):
-                        self._positive = positive
-                    elif isinstance(positive, dict):
-                        self._positive_sdxl.update(positive)
-                    negative = self._comfy_traverse(prompt, inputs["negative"][0])
-                    if isinstance(negative, str):
-                        self._negative = negative
-                    elif isinstance(negative, dict):
-                        self._negative_sdxl.update(negative)
-
+                elif inputs.get("samples_from"):
                     last_flow, last_node = self._comfy_traverse(
-                        prompt, inputs["image"][0]
+                        prompt, inputs["samples_from"][0]
                     )
-                    flow = merge_dict(flow, last_flow)
-                    node += last_node
-                except:
-                    print("comfyUI ControlNetApply error")
-            case "ImageScale":
-                try:
-                    flow = inputs
-                    last_flow, last_node = self._comfy_traverse(
-                        prompt, inputs["image"][0]
-                    )
-                    flow = merge_dict(flow, last_flow)
-                    node += last_node
-                except:
-                    print("comfyUI ImageScale error")
-            case "UpscaleModelLoader":
-                try:
-                    return {"upscaler": inputs["model_name"]}
-                except:
-                    print("comfyUI UpscaleLoader error")
-            case "ImageUpscaleWithModel":
-                try:
-                    flow = inputs
-                    last_flow, last_node = self._comfy_traverse(
-                        prompt, inputs["image"][0]
-                    )
-                    model = self._comfy_traverse(prompt, inputs["upscale_model"][0])
-                    flow = merge_dict(flow, last_flow)
-                    flow = merge_dict(flow, model)
-                    node += last_node
-                except:
-                    print("comfyUI UpscaleModel error")
-            case "ConditioningCombine":
-                try:
-                    last_flow1, last_node1 = self._comfy_traverse(
-                        prompt, inputs["conditioning_1"][0]
-                    )
-                    last_flow2, last_node2 = self._comfy_traverse(
-                        prompt, inputs["conditioning_2"][0]
-                    )
-                    flow = merge_dict(flow, last_flow1)
-                    flow = merge_dict(flow, last_flow2)
-                    node += last_node1 + last_node2
-                except:
-                    print("comfyUI ConditioningCombine error")
-            # SD Prompt Reader Node
-            case "SDPromptReader":
-                try:
-                    return json.loads(prompt[end_node]["is_changed"][0])
-                except:
-                    print("comfyUI SDPromptReader error")
-            case "SDParameterGenerator":
-                try:
-                    return inputs
-                except:
-                    print("comfyUI SDParameterGenerator error")
-            # custom nodes
-            case "SDXLPromptStyler":
-                try:
-                    return inputs.get("text_positive"), inputs.get("text_negative")
-                except:
-                    print("comfyUI SDXLPromptStyler error")
-            case "CR Seed":
-                try:
-                    return inputs.get("seed")
-                except:
-                    print("comfyUI CR Seed error")
-            case _:
-                try:
-                    last_flow = {}
-                    last_node = []
-                    if inputs.get("samples"):
-                        last_flow, last_node = self._comfy_traverse(
-                            prompt, inputs["samples"][0]
-                        )
-                    elif inputs.get("image") and isinstance(inputs.get("image"), list):
-                        last_flow, last_node = self._comfy_traverse(
-                            prompt, inputs["image"][0]
-                        )
-                    elif inputs.get("model"):
-                        last_flow, last_node = self._comfy_traverse(
-                            prompt, inputs["model"][0]
-                        )
-                    elif inputs.get("clip"):
-                        last_flow, last_node = self._comfy_traverse(
-                            prompt, inputs["clip"][0]
-                        )
-                    elif inputs.get("samples_from"):
-                        last_flow, last_node = self._comfy_traverse(
-                            prompt, inputs["samples_from"][0]
-                        )
-                    elif inputs.get("conditioning"):
-                        result = self._comfy_traverse(prompt, inputs["conditioning"][0])
-                        if isinstance(result, str):
-                            return result
-                        elif isinstance(result, list):
-                            last_flow, last_node = result
-                    flow = merge_dict(flow, last_flow)
-                    node += last_node
-                except:
-                    print("comfyUI bridging node error")
+                elif inputs.get("conditioning"):
+                    result = self._comfy_traverse(prompt, inputs["conditioning"][0])
+                    if isinstance(result, str):
+                        return result
+                    elif isinstance(result, list):
+                        last_flow, last_node = result
+                flow = merge_dict(flow, last_flow)
+                node += last_node
+            except:
+                print("comfyUI bridging node error")
         return flow, node

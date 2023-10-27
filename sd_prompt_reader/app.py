@@ -631,20 +631,20 @@ class App(Tk):
                 f.write(self.image_data.raw)
                 self.status_bar.success(MESSAGE["alongside"][0])
         else:
-            match export_mode:
-                case "select directory":
-                    path = filedialog.asksaveasfilename(
-                        title="Select directory",
-                        initialdir=self.file_path.parent,
-                        initialfile=self.file_path.stem,
-                        filetypes=(("text file", "*.txt"),),
-                    )
-                    if path:
-                        with open(
-                            Path(path).with_suffix(".txt"), "w", encoding="utf-8"
-                        ) as f:
-                            f.write(self.image_data.raw)
-                            self.status_bar.success(MESSAGE["txt_select"][0])
+            # match export_mode:
+            if export_mode=="select directory":
+                path = filedialog.asksaveasfilename(
+                    title="Select directory",
+                    initialdir=self.file_path.parent,
+                    initialfile=self.file_path.stem,
+                    filetypes=(("text file", "*.txt"),),
+                )
+                if path:
+                    with open(
+                        Path(path).with_suffix(".txt"), "w", encoding="utf-8"
+                    ) as f:
+                        f.write(self.image_data.raw)
+                        self.status_bar.success(MESSAGE["txt_select"][0])
 
     def remove_data(self, remove_mode: str = None):
         image_without_exif = self.image_data.remove_data(self.file_path)
@@ -660,33 +660,33 @@ class App(Tk):
             else:
                 self.status_bar.success(MESSAGE["suffix"][0])
         else:
-            match remove_mode:
+            # match remove_mode:
                 # case "add suffix":
                 #
-                case "overwrite the original image":
+            if remove_mode == "overwrite the original image":
+                try:
+                    self.image_data.save_image(
+                        self.file_path, self.file_path, self.image_data.format
+                    )
+                except:
+                    print("Remove error")
+                else:
+                    self.status_bar.success(MESSAGE["overwrite"][0])
+            if remove_mode == "select directory":
+                path = filedialog.asksaveasfilename(
+                    title="Select directory",
+                    initialdir=self.file_path.parent,
+                    initialfile=new_path.name,
+                )
+                if path:
                     try:
                         self.image_data.save_image(
-                            self.file_path, self.file_path, self.image_data.format
+                            self.file_path, path, self.image_data.format
                         )
                     except:
                         print("Remove error")
                     else:
-                        self.status_bar.success(MESSAGE["overwrite"][0])
-                case "select directory":
-                    path = filedialog.asksaveasfilename(
-                        title="Select directory",
-                        initialdir=self.file_path.parent,
-                        initialfile=new_path.name,
-                    )
-                    if path:
-                        try:
-                            self.image_data.save_image(
-                                self.file_path, path, self.image_data.format
-                            )
-                        except:
-                            print("Remove error")
-                        else:
-                            self.status_bar.success(MESSAGE["remove_select"][0])
+                        self.status_bar.success(MESSAGE["remove_select"][0])
 
     def save_data(self, save_mode: str = None):
         with Image.open(self.file_path) as image:
@@ -708,129 +708,129 @@ class App(Tk):
                 else:
                     self.status_bar.success(MESSAGE["suffix"][0])
             else:
-                match save_mode:
-                    case "overwrite the original image":
+                # match save_mode:
+                if save_mode == "overwrite the original image":
+                    try:
+                        self.image_data.save_image(
+                            self.file_path,
+                            self.file_path,
+                            self.image_data.format,
+                            data,
+                        )
+                    except:
+                        print("Save error")
+                    else:
+                        self.status_bar.success(MESSAGE["overwrite"][0])
+                if save_mode == "select directory":
+                    path = filedialog.asksaveasfilename(
+                        title="Select directory",
+                        initialdir=self.file_path.parent,
+                        initialfile=new_path.name,
+                    )
+                    if path:
                         try:
                             self.image_data.save_image(
-                                self.file_path,
-                                self.file_path,
-                                self.image_data.format,
-                                data,
+                                self.file_path, path, self.image_data.format, data
                             )
                         except:
                             print("Save error")
                         else:
-                            self.status_bar.success(MESSAGE["overwrite"][0])
-                    case "select directory":
-                        path = filedialog.asksaveasfilename(
-                            title="Select directory",
-                            initialdir=self.file_path.parent,
-                            initialfile=new_path.name,
-                        )
-                        if path:
-                            try:
-                                self.image_data.save_image(
-                                    self.file_path, path, self.image_data.format, data
-                                )
-                            except:
-                                print("Save error")
-                            else:
-                                self.status_bar.success(MESSAGE["remove_select"][0])
+                            self.status_bar.success(MESSAGE["remove_select"][0])
 
     def copy_raw(self, copy_mode: str = None):
-        match copy_mode:
-            case "single line prompt":
-                self.copy_to_clipboard(self.image_data.prompt_to_line())
+        # match copy_mode:
+        if copy_mode == "single line prompt":
+            self.copy_to_clipboard(self.image_data.prompt_to_line())
 
     def edit_mode_switch(self):
-        match self.button_edit.mode:
-            case EditMode.OFF:
-                self.button_edit.mode = EditMode.ON
-                self.button_edit.image = self.edit_off_image
-                self.button_edit.switch_on()
-                self.positive_box.edit_on()
-                self.negative_box.edit_on()
-                self.setting_box.edit_on()
-                if self.button_view_setting.mode == SettingMode.SIMPLE:
-                    self.setting_mode_switch()
+        # match self.button_edit.mode:
+        if self.button_edit.mode == EditMode.OFF:
+            self.button_edit.mode = EditMode.ON
+            self.button_edit.image = self.edit_off_image
+            self.button_edit.switch_on()
+            self.positive_box.edit_on()
+            self.negative_box.edit_on()
+            self.setting_box.edit_on()
+            if self.button_view_setting.mode == SettingMode.SIMPLE:
+                self.setting_mode_switch()
+            for button in self.non_edit_buttons:
+                button.disable()
+            self.button_save.enable()
+            self.status_bar.info(MESSAGE["edit"][0])
+        if self.button_edit.mode == EditMode.ON:
+            self.button_edit.mode = EditMode.OFF
+            self.button_edit.image = self.edit_image
+            self.button_edit.switch_off()
+            self.positive_box.edit_off()
+            self.negative_box.edit_off()
+            self.setting_box.edit_off()
+            if self.readable:
                 for button in self.non_edit_buttons:
-                    button.disable()
-                self.button_save.enable()
-                self.status_bar.info(MESSAGE["edit"][0])
-            case EditMode.ON:
-                self.button_edit.mode = EditMode.OFF
-                self.button_edit.image = self.edit_image
-                self.button_edit.switch_off()
-                self.positive_box.edit_off()
-                self.negative_box.edit_off()
-                self.setting_box.edit_off()
-                if self.readable:
-                    for button in self.non_edit_buttons:
-                        button.enable()
-                self.button_save.disable()
-                self.status_bar.info(MESSAGE["edit"][-1])
+                    button.enable()
+            self.button_save.disable()
+            self.status_bar.info(MESSAGE["edit"][-1])
 
     def edit_mode_update(self):
-        match self.button_edit.mode:
-            case EditMode.OFF:
-                self.positive_box.edit_off()
-                self.negative_box.edit_off()
-                self.setting_box.edit_off()
-                if self.readable:
-                    for button in self.non_edit_buttons:
-                        button.enable()
-                self.button_save.disable()
-            case EditMode.ON:
-                self.positive_box.edit_on()
-                self.negative_box.edit_on()
-                self.setting_box.edit_on()
+        # match self.button_edit.mode:
+        if self.button_edit.mode == EditMode.OFF:
+            self.positive_box.edit_off()
+            self.negative_box.edit_off()
+            self.setting_box.edit_off()
+            if self.readable:
                 for button in self.non_edit_buttons:
-                    button.disable()
-                self.button_save.enable()
+                    button.enable()
+            self.button_save.disable()
+        if self.button_edit.mode == EditMode.ON:
+            self.positive_box.edit_on()
+            self.negative_box.edit_on()
+            self.setting_box.edit_on()
+            for button in self.non_edit_buttons:
+                button.disable()
+            self.button_save.enable()
 
     def setting_mode_switch(self):
-        match self.button_view_setting.mode:
-            case SettingMode.NORMAL:
-                self.button_view_setting.mode = SettingMode.SIMPLE
-                self.setting_box_simple.grid(
-                    row=2,
-                    column=1,
-                    columnspan=6,
-                    sticky="news",
-                    padx=(0, 20),
-                    pady=(0, 20),
-                )
-                self.setting_box.grid_forget()
-                self.status_bar.info(MESSAGE["view_setting"][0])
-            case SettingMode.SIMPLE:
-                self.button_view_setting.mode = SettingMode.NORMAL
-                self.setting_box.grid(
-                    row=2,
-                    column=1,
-                    columnspan=6,
-                    sticky="news",
-                    padx=(0, 20),
-                    pady=(0, 20),
-                )
-                self.setting_box_simple.grid_forget()
-                self.status_bar.info(MESSAGE["view_setting"][-1])
+        # match self.button_view_setting.mode:
+        if self.button_view_setting.mode == SettingMode.NORMAL:
+            self.button_view_setting.mode = SettingMode.SIMPLE
+            self.setting_box_simple.grid(
+                row=2,
+                column=1,
+                columnspan=6,
+                sticky="news",
+                padx=(0, 20),
+                pady=(0, 20),
+            )
+            self.setting_box.grid_forget()
+            self.status_bar.info(MESSAGE["view_setting"][0])
+        if self.button_view_setting.mode == SettingMode.SIMPLE:
+            self.button_view_setting.mode = SettingMode.NORMAL
+            self.setting_box.grid(
+                row=2,
+                column=1,
+                columnspan=6,
+                sticky="news",
+                padx=(0, 20),
+                pady=(0, 20),
+            )
+            self.setting_box_simple.grid_forget()
+            self.status_bar.info(MESSAGE["view_setting"][-1])
 
     @staticmethod
     def mode_update(button: STkButton, textbox: STkTextbox, sort_button: STkButton):
-        match button.mode:
-            case ViewMode.NORMAL:
-                match sort_button.mode:
-                    case SortMode.ASC:
-                        textbox.sort_asc()
-                    case SortMode.DES:
-                        textbox.sort_des()
-            case ViewMode.VERTICAL:
-                textbox.view_vertical()
-                match sort_button.mode:
-                    case SortMode.ASC:
-                        textbox.sort_asc()
-                    case SortMode.DES:
-                        textbox.sort_des()
+        # match button.mode:
+        if button.mode == ViewMode.NORMAL:
+            # match sort_button.mode:
+            if sort_button == SortMode.ASC:
+                textbox.sort_asc()
+            if sort_button == SortMode.DES:
+                textbox.sort_des()
+        if button.mode == ViewMode.VERTICAL:
+            textbox.view_vertical()
+            # match sort_button.mode:
+            if sort_button == SortMode.ASC:
+                textbox.sort_asc()
+            if sort_button == SortMode.DES:
+                textbox.sort_des()
 
     def select_image(self):
         initialdir = self.file_path.parent if self.file_path else "/"

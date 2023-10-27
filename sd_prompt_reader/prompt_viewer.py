@@ -194,11 +194,11 @@ class PromptViewer:
     def display(self, prompt):
         if isinstance(prompt, str):
             if self.is_sdxl:
-                match self.prompt_box_mode:
-                    case PromptMode.TAB:
-                        self.prompt_frame_sdxl.pack_forget()
-                    case PromptMode.SEPARATE:
-                        self.prompt_frame_sdxl_separate.pack_forget()
+                # match self.prompt_box_mode:
+                if self.prompt_box_mode == PromptMode.TAB:
+                    self.prompt_frame_sdxl.pack_forget()
+                if self.prompt_box_mode == PromptMode.SEPARATE:
+                    self.prompt_frame_sdxl_separate.pack_forget()
                 self.prompt_frame.pack(fill="both", expand=True)
             self.text = prompt or ""
             self.is_sdxl = False
@@ -214,24 +214,24 @@ class PromptViewer:
             self.prompt_box_r.textbox.text = prompt.get("Refiner") or ""
 
             self.prompt_frame.pack_forget()
-            match self.prompt_box_mode:
-                case PromptMode.TAB:
-                    self.prompt_frame_sdxl.pack(fill="both", expand=True)
-                case PromptMode.SEPARATE:
-                    self.prompt_frame_sdxl_separate.pack(fill="both", expand=True)
+            # match self.prompt_box_mode:
+            if self.prompt_box_mode == PromptMode.TAB:
+                self.prompt_frame_sdxl.pack(fill="both", expand=True)
+            if self.prompt_box_mode == PromptMode.SEPARATE:
+                self.prompt_frame_sdxl_separate.pack(fill="both", expand=True)
 
             self.is_sdxl = True
 
     def switch_view(self, mode):
-        match mode:
-            case PromptMode.SEPARATE:
-                self.prompt_frame_sdxl.pack_forget()
-                self.prompt_frame_sdxl_separate.pack(fill="both", expand=True)
-                self.prompt_box_mode = PromptMode.SEPARATE
-            case PromptMode.TAB:
-                self.prompt_frame_sdxl_separate.pack_forget()
-                self.prompt_frame_sdxl.pack(fill="both", expand=True)
-                self.prompt_box_mode = PromptMode.TAB
+        # match mode:
+        if mode == PromptMode.SEPARATE:
+            self.prompt_frame_sdxl.pack_forget()
+            self.prompt_frame_sdxl_separate.pack(fill="both", expand=True)
+            self.prompt_box_mode = PromptMode.SEPARATE
+        if mode == PromptMode.TAB:
+            self.prompt_frame_sdxl_separate.pack_forget()
+            self.prompt_frame_sdxl.pack(fill="both", expand=True)
+            self.prompt_box_mode = PromptMode.TAB
 
     def mode_switch(self, button: STkButton, sort_button: STkButton = None):
         self.prompt_box_g.mode_switch(button, sort_button, False)
@@ -378,89 +378,89 @@ class PromptViewer:
             self, button: STkButton, sort_button: STkButton = None, update_status=True
         ):
             if isinstance(button.mode, ViewMode):
-                match button.mode:
-                    case ViewMode.NORMAL:
-                        button.switch_on()
-                        button.mode = (
-                            ViewMode.VERTICAL if update_status else ViewMode.NORMAL
-                        )
-                        self.textbox.view_vertical()
-                        if sort_button:
-                            match sort_button.mode:
-                                case SortMode.ASC:
-                                    self.textbox.sort_asc()
-                                case SortMode.DES:
-                                    self.textbox.sort_des()
-                        self.status_bar.info(MESSAGE["view_prompt"][0])
-                    case ViewMode.VERTICAL:
-                        button.switch_off()
-                        button.mode = (
-                            ViewMode.NORMAL if update_status else ViewMode.VERTICAL
-                        )
-                        self.textbox.view_normal()
-                        if sort_button:
-                            match sort_button.mode:
-                                case SortMode.ASC:
-                                    self.textbox.sort_asc()
-                                case SortMode.DES:
-                                    self.textbox.sort_des()
-                        self.status_bar.info(MESSAGE["view_prompt"][-1])
+                # match button.mode:
+                if button.mode == ViewMode.NORMAL:
+                    button.switch_on()
+                    button.mode = (
+                        ViewMode.VERTICAL if update_status else ViewMode.NORMAL
+                    )
+                    self.textbox.view_vertical()
+                    if sort_button:
+                        # match sort_button.mode:
+                        if sort_button.mode == SortMode.ASC:
+                            self.textbox.sort_asc()
+                        if sort_button.mode == SortMode.DES:
+                            self.textbox.sort_des()
+                    self.status_bar.info(MESSAGE["view_prompt"][0])
+                if button.mode == ViewMode.VERTICAL:
+                    button.switch_off()
+                    button.mode = (
+                        ViewMode.NORMAL if update_status else ViewMode.VERTICAL
+                    )
+                    self.textbox.view_normal()
+                    if sort_button:
+                        # match sort_button.mode:
+                        if sort_button == SortMode.ASC:
+                            self.textbox.sort_asc()
+                        if sort_button == SortMode.DES:
+                            self.textbox.sort_des()
+                    self.status_bar.info(MESSAGE["view_prompt"][-1])
             elif isinstance(button.mode, SortMode):
-                match button.mode:
-                    case SortMode.OFF:
-                        button.switch_on()
-                        button.mode = SortMode.ASC if update_status else SortMode.OFF
-                        self.textbox.sort_asc()
-                        self.status_bar.info(MESSAGE["sort"][0])
-                    case SortMode.ASC:
-                        button.switch_on()
-                        button.mode = SortMode.DES if update_status else SortMode.ASC
-                        self.textbox.sort_des()
-                        self.status_bar.info(MESSAGE["sort"][1])
-                    case SortMode.DES:
-                        button.switch_off()
-                        button.mode = SortMode.OFF if update_status else SortMode.DES
-                        self.textbox.sort_off()
-                        self.status_bar.info(MESSAGE["sort"][-1])
+                # match button.mode:
+                if button.mode == SortMode.OFF:
+                    button.switch_on()
+                    button.mode = SortMode.ASC if update_status else SortMode.OFF
+                    self.textbox.sort_asc()
+                    self.status_bar.info(MESSAGE["sort"][0])
+                if button.mode == SortMode.ASC:
+                    button.switch_on()
+                    button.mode = SortMode.DES if update_status else SortMode.ASC
+                    self.textbox.sort_des()
+                    self.status_bar.info(MESSAGE["sort"][1])
+                if button.mode == SortMode.DES:
+                    button.switch_off()
+                    button.mode = SortMode.OFF if update_status else SortMode.DES
+                    self.textbox.sort_off()
+                    self.status_bar.info(MESSAGE["sort"][-1])
 
         def mode_update(self, button_view=None, button_sort=None):
             button_view = button_view if button_view else self.button_view
             button_sort = button_sort if button_sort else self.button_sort
-            match button_view.mode:
-                case ViewMode.NORMAL:
-                    match button_sort.mode:
-                        case SortMode.ASC:
-                            self.textbox.sort_asc()
-                        case SortMode.DES:
-                            self.textbox.sort_des()
-                case ViewMode.VERTICAL:
-                    self.textbox.view_vertical()
-                    match button_sort.mode:
-                        case SortMode.ASC:
-                            self.textbox.sort_asc()
-                        case SortMode.DES:
-                            self.textbox.sort_des()
+            # match button_view.mode:
+            if button_view.mode == ViewMode.NORMAL:
+                # match button_sort.mode:
+                if button_sort.mode == SortMode.ASC:
+                    self.textbox.sort_asc()
+                if button_sort.mode == SortMode.DES:
+                    self.textbox.sort_des()
+            if button_view.mode == ViewMode.VERTICAL:
+                self.textbox.view_vertical()
+                # match button_sort.mode:
+                if button_sort.mode == SortMode.ASC:
+                    self.textbox.sort_asc()
+                if button_sort.mode == SortMode.DES:
+                    self.textbox.sort_des()
 
         def prompt_switch(self, mode):
-            match mode:
-                case PromptMode.CLIP_G:
-                    self.prompt_tab_g.switch_on()
-                    self.prompt_tab_l.switch_off()
-                    self.prompt_tab_r.switch_off()
-                    self.textbox.text = self._prompt.get("Clip G") or ""
-                    self.mode_update()
-                case PromptMode.CLIP_L:
-                    self.prompt_tab_g.switch_off()
-                    self.prompt_tab_l.switch_on()
-                    self.prompt_tab_r.switch_off()
-                    self.textbox.text = self._prompt.get("Clip L") or ""
-                    self.mode_update()
-                case PromptMode.REFINER:
-                    self.prompt_tab_g.switch_off()
-                    self.prompt_tab_l.switch_off()
-                    self.prompt_tab_r.switch_on()
-                    self.textbox.text = self._prompt.get("Refiner") or ""
-                    self.mode_update()
+            # match mode:
+            if mode == PromptMode.CLIP_G:
+                self.prompt_tab_g.switch_on()
+                self.prompt_tab_l.switch_off()
+                self.prompt_tab_r.switch_off()
+                self.textbox.text = self._prompt.get("Clip G") or ""
+                self.mode_update()
+            if mode == PromptMode.CLIP_L:
+                self.prompt_tab_g.switch_off()
+                self.prompt_tab_l.switch_on()
+                self.prompt_tab_r.switch_off()
+                self.textbox.text = self._prompt.get("Clip L") or ""
+                self.mode_update()
+            if mode == PromptMode.REFINER:
+                self.prompt_tab_g.switch_off()
+                self.prompt_tab_l.switch_off()
+                self.prompt_tab_r.switch_on()
+                self.textbox.text = self._prompt.get("Refiner") or ""
+                self.mode_update()
 
         @property
         def prompt(self):

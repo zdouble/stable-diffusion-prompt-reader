@@ -169,37 +169,37 @@ class ImageDataReader:
     def save_image(image_path, new_path, image_format, data=None):
         metadata = None
         if data:
-            match image_format:
-                case "PNG":
-                    metadata = PngInfo()
-                    metadata.add_text("parameters", data)
-                case "JPEG" | "WEBP":
-                    metadata = piexif.dump(
-                        {
-                            "Exif": {
-                                piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(
-                                    data, encoding="unicode"
-                                )
-                            },
-                        }
-                    )
+            # match image_format:
+            if image_format == "PNG":
+                metadata = PngInfo()
+                metadata.add_text("parameters", data)
+            if image_format == "JPEG" | "WEBP":
+                metadata = piexif.dump(
+                    {
+                        "Exif": {
+                            piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(
+                                data, encoding="unicode"
+                            )
+                        },
+                    }
+                )
 
         with Image.open(image_path) as f:
             try:
-                match image_format:
-                    case "PNG":
-                        if data:
-                            f.save(new_path, pnginfo=metadata)
-                        else:
-                            f.save(new_path)
-                    case "JPEG":
-                        f.save(new_path, quality="keep")
-                        if data:
-                            piexif.insert(metadata, str(new_path))
-                    case "WEBP":
-                        f.save(new_path, quality=100, lossless=True)
-                        if data:
-                            piexif.insert(metadata, str(new_path))
+                # match image_format:
+                if image_format == "PNG":
+                    if data:
+                        f.save(new_path, pnginfo=metadata)
+                    else:
+                        f.save(new_path)
+                if image_format == "JPEG":
+                    f.save(new_path, quality="keep")
+                    if data:
+                        piexif.insert(metadata, str(new_path))
+                if image_format == "WEBP":
+                    f.save(new_path, quality=100, lossless=True)
+                    if data:
+                        piexif.insert(metadata, str(new_path))
             except:
                 print("Save error")
 
